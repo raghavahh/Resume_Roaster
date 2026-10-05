@@ -23,8 +23,17 @@ export function isUsable(grant: CreditGrant, now: Date): boolean {
   );
 }
 
-function expiryRank(grant: CreditGrant): number {
-  return grant.expiresAt === null ? Number.POSITIVE_INFINITY : grant.expiresAt.getTime();
+/** Soonest expiry first; grants that never expire go last. */
+function compareExpiry(a: CreditGrant, b: CreditGrant): number {
+  if (a.expiresAt === null) return b.expiresAt === null ? 0 : 1;
+  if (b.expiresAt === null) return -1;
+  return a.expiresAt.getTime() - b.expiresAt.getTime();
+}
+
+/** Plain code-unit order, independent of locale, so it matches the database's ordering. */
+function compareIds(a: CreditGrant, b: CreditGrant): number {
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? -1 : 1;
 }
 
 /**
@@ -47,10 +56,10 @@ export class EntitlementResolver {
     const candidates = grants.filter((g) => pool.includes(g.kind) && isUsable(g, now));
     const ordered = candidates.toSorted(
       (a, b) =>
-        expiryRank(a) - expiryRank(b) ||
+        compareExpiry(a, b) ||
         pool.indexOf(a.kind) - pool.indexOf(b.kind) ||
         a.grantedAt.getTime() - b.grantedAt.getTime() ||
-        a.id.localeCompare(b.id),
+        compareIds(a, b),
     );
     return ordered[0] ?? null;
   }
@@ -59,7 +68,7 @@ export class EntitlementResolver {
   public balances(grants: readonly CreditGrant[], now: Date): CreditBalance[] {
     return grants
       .filter((g) => isUsable(g, now))
-      .toSorted((a, b) => expiryRank(a) - expiryRank(b) || a.id.localeCompare(b.id))
+      .toSorted((a, b) => compareExpiry(a, b) || compareIds(a, b))
       .map((g) => ({
         kind: g.kind,
         remaining: g.remaining,

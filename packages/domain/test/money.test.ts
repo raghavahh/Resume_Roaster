@@ -63,13 +63,22 @@ describe('Money', () => {
     });
   });
 
+  it('normalises -0 and serialises as paise', () => {
+    expect(Object.is(Money.ofPaise(-0).toPaise(), 0)).toBe(true);
+    expect(JSON.stringify({ price: Money.ofRupees(99) })).toBe('{"price":9900}');
+  });
+
+  it('formats the largest safe amount', () => {
+    expect(Money.ofPaise(Number.MAX_SAFE_INTEGER).format()).toBe('₹9,00,71,99,25,47,409.91');
+  });
+
   it('reports a typed VALIDATION error', () => {
     try {
       Money.ofPaise(-5);
       expect.unreachable();
     } catch (error) {
       expect(error).toBeInstanceOf(ValidationError);
-      expect(error).toMatchObject({ code: 'VALIDATION', name: 'ValidationError' });
+      expect(error).toMatchObject({ code: 'VALIDATION', name: 'VALIDATION' });
     }
   });
 });

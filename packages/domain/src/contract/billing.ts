@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { CreditKindSchema, ProductIdSchema } from '../features';
 
-export const PackIdSchema = z.string().regex(/^[a-z][a-z0-9_]{1,39}$/, { error: 'Unknown pack' });
+/** Shared by the schema and `Pack` validation, so the two can't drift. */
+export const PACK_ID_PATTERN = /^[a-z][a-z0-9_]{1,39}$/;
+export const PackIdSchema = z.string().regex(PACK_ID_PATTERN, { error: 'Unknown pack' });
+
+/** GET /v1/billing/catalog?product=… */
+export const CatalogQuerySchema = z.strictObject({ product: ProductIdSchema.default('roaster') });
+export type CatalogQuery = z.infer<typeof CatalogQuerySchema>;
 
 /**
  * POST /v1/pay/order. The browser sends WHICH pack, never a price or amount (PRD A6.7, T4).

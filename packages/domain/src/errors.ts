@@ -16,61 +16,96 @@ export const ERROR_CODES = [
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
-/** Base of all expected, typed failures. Abstract, so only the subclasses below can be thrown. */
+/**
+ * Base of all expected, typed failures. Abstract, so only the subclasses below can be thrown.
+ * `name` is the code, not the class name: minifiers mangle class names.
+ */
 export abstract class AppError extends Error {
-  public abstract readonly code: ErrorCode;
+  public readonly code: ErrorCode;
 
-  constructor(message: string) {
+  protected constructor(code: ErrorCode, message: string) {
     super(message);
-    this.name = new.target.name;
+    this.code = code;
+    this.name = code;
   }
 }
 
 export class ValidationError extends AppError {
-  public override readonly code = 'VALIDATION';
+  constructor(message: string) {
+    super('VALIDATION', message);
+  }
 }
 
 export class AuthError extends AppError {
-  public override readonly code = 'UNAUTHENTICATED';
+  constructor(message: string) {
+    super('UNAUTHENTICATED', message);
+  }
 }
 
 export class ForbiddenError extends AppError {
-  public override readonly code = 'FORBIDDEN';
-}
-
-export class QuotaExceededError extends AppError {
-  public override readonly code = 'QUOTA_EXCEEDED';
-}
-
-export class SoldOutError extends AppError {
-  public override readonly code = 'SOLD_OUT';
-}
-
-export class NoCreditsError extends AppError {
-  public override readonly code = 'NO_CREDITS';
-}
-
-export class PaymentError extends AppError {
-  public override readonly code = 'PAYMENT_INVALID';
-}
-
-export class UpstreamError extends AppError {
-  public override readonly code = 'UPSTREAM_FAILED';
-}
-
-export class RateLimitError extends AppError {
-  public override readonly code = 'RATE_LIMITED';
+  constructor(message: string) {
+    super('FORBIDDEN', message);
+  }
 }
 
 export class NotFoundError extends AppError {
-  public override readonly code = 'NOT_FOUND';
+  constructor(message: string) {
+    super('NOT_FOUND', message);
+  }
+}
+
+export class QuotaExceededError extends AppError {
+  constructor(message: string) {
+    super('QUOTA_EXCEEDED', message);
+  }
+}
+
+export class SoldOutError extends AppError {
+  constructor(message: string) {
+    super('SOLD_OUT', message);
+  }
+}
+
+export class NoCreditsError extends AppError {
+  constructor(message: string) {
+    super('NO_CREDITS', message);
+  }
+}
+
+export class PaymentError extends AppError {
+  constructor(message: string) {
+    super('PAYMENT_INVALID', message);
+  }
+}
+
+export class UpstreamError extends AppError {
+  constructor(message: string) {
+    super('UPSTREAM_FAILED', message);
+  }
+}
+
+export class RateLimitError extends AppError {
+  constructor(message: string) {
+    super('RATE_LIMITED', message);
+  }
 }
 
 export class PayloadTooLargeError extends AppError {
-  public override readonly code = 'PAYLOAD_TOO_LARGE';
+  constructor(message: string) {
+    super('PAYLOAD_TOO_LARGE', message);
+  }
 }
 
 /** A kill switch is on (PRD C3 incident response) or a dependency is down. */
 export class UnavailableError extends AppError {
-  public override readonly code = 'UNAVAILABLE';
+  constructor(message: string) {
+    super('UNAVAILABLE', message);
+  }
+}
+
+/** An unexpected failure. The message is logged, never shown to the user. */
+export class InternalError extends AppError {
+  constructor(message: string) {
+    super('INTERNAL', message);
+  }
 }

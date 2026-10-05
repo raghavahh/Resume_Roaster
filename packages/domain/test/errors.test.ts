@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   AppError,
   AuthError,
+  ERROR_CODES,
   ForbiddenError,
+  InternalError,
   NoCreditsError,
   NotFoundError,
   PayloadTooLargeError,
@@ -16,24 +18,33 @@ import {
 } from '../src';
 
 describe('AppError hierarchy', () => {
-  it.each([
-    [new ValidationError('m'), 'VALIDATION', 'ValidationError'],
-    [new AuthError('m'), 'UNAUTHENTICATED', 'AuthError'],
-    [new ForbiddenError('m'), 'FORBIDDEN', 'ForbiddenError'],
-    [new QuotaExceededError('m'), 'QUOTA_EXCEEDED', 'QuotaExceededError'],
-    [new SoldOutError('m'), 'SOLD_OUT', 'SoldOutError'],
-    [new NoCreditsError('m'), 'NO_CREDITS', 'NoCreditsError'],
-    [new PaymentError('m'), 'PAYMENT_INVALID', 'PaymentError'],
-    [new UpstreamError('m'), 'UPSTREAM_FAILED', 'UpstreamError'],
-    [new RateLimitError('m'), 'RATE_LIMITED', 'RateLimitError'],
-    [new NotFoundError('m'), 'NOT_FOUND', 'NotFoundError'],
-    [new PayloadTooLargeError('m'), 'PAYLOAD_TOO_LARGE', 'PayloadTooLargeError'],
-    [new UnavailableError('m'), 'UNAVAILABLE', 'UnavailableError'],
-  ])('%o carries code %s', (error, code, name) => {
-    expect(error).toBeInstanceOf(AppError);
-    expect(error).toBeInstanceOf(Error);
-    expect(error.code).toBe(code);
-    expect(error.name).toBe(name);
-    expect(error.message).toBe('m');
+  const errors: readonly AppError[] = [
+    new ValidationError('m'),
+    new AuthError('m'),
+    new ForbiddenError('m'),
+    new NotFoundError('m'),
+    new QuotaExceededError('m'),
+    new SoldOutError('m'),
+    new NoCreditsError('m'),
+    new PaymentError('m'),
+    new UpstreamError('m'),
+    new RateLimitError('m'),
+    new PayloadTooLargeError('m'),
+    new UnavailableError('m'),
+    new InternalError('m'),
+  ];
+
+  it('has exactly one class per error code', () => {
+    expect(errors.map((e) => e.code).toSorted()).toEqual([...ERROR_CODES].toSorted());
   });
+
+  it.each(errors.map((e) => [e.code, e] as const))(
+    '%s is a typed Error named by its code',
+    (code, error) => {
+      expect(error).toBeInstanceOf(AppError);
+      expect(error).toBeInstanceOf(Error);
+      expect(error.name).toBe(code);
+      expect(error.message).toBe('m');
+    },
+  );
 });

@@ -32,3 +32,5 @@ export type CreditKind = z.infer<typeof CreditKindSchema>;
 /** AI tiers (PRD B8). Free traffic can never use the paid or priority tiers. */
 export const AI_TIERS = ['free', 'paid', 'priority'] as const;
 export type AiTier = (typeof AI_TIERS)[number];
+/** Tiers a purchase can unlock. */
+export const PaidAiTierSchema = z.enum(['paid', 'priority']);

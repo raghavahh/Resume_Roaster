@@ -59,8 +59,37 @@ describe('Pack', () => {
     ['zero hourly limit', { hourlyLimit: 0 }],
     ['a zero price', { priceRupees: 0 }],
     ['a fractional price', { priceRupees: 99.5 }],
+    ['a one-character id', { id: 'a' }],
+    ['a 41-character id', { id: `a${'b'.repeat(40)}` }],
+    ['NaN validity', { validityDays: Number.NaN }],
+    ['infinite hourly limit', { hourlyLimit: Number.POSITIVE_INFINITY }],
   ])('rejects %s', (_label, override) => {
     expect(() => new Pack({ ...base, ...override })).toThrow(ValidationError);
+  });
+
+  it('accepts ids of exactly 2 and 40 characters', () => {
+    expect(new Pack({ ...base, id: 'ab' }).id).toBe('ab');
+    expect(new Pack({ ...base, id: `a${'b'.repeat(39)}` }).id).toHaveLength(40);
+  });
+
+  it('rejects values TypeScript would catch but config could still contain', () => {
+    // @ts-expect-error -- simulating a mistyped product in config
+    expect(() => new Pack({ ...base, product: 'other' })).toThrow(ValidationError);
+    // @ts-expect-error -- simulating a mistyped AI tier in config
+    expect(() => new Pack({ ...base, aiTier: 'free' })).toThrow(ValidationError);
+    // @ts-expect-error -- simulating an unknown credit kind in config
+    expect(() => new Pack({ ...base, credits: { rewrite: 1, unlimited: 1 } })).toThrow(
+      ValidationError,
+    );
+  });
+
+  it('is unaffected by later changes to its definition', () => {
+    const credits = { rewrite: 2 };
+    const pack = new Pack({ ...base, credits });
+    credits.rewrite = 999;
+    expect(pack.creditEntries()).toEqual([['rewrite', 2]]);
+    expect(Object.isFrozen(pack.creditEntries())).toBe(true);
+    expect(Object.isFrozen(DEFAULT_CATALOG.creditPool('rewrite'))).toBe(true);
   });
 });
 

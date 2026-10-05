@@ -1,7 +1,10 @@
-import type { PublicPack } from './contract/billing';
+import { PACK_ID_PATTERN, type PublicPack } from './contract/billing';
 import { ValidationError } from './errors';
 import {
   CREDIT_KINDS,
+  CreditKindSchema,
+  PaidAiTierSchema,
+  ProductIdSchema,
   type Action,
   type AiTier,
   type CreditKind,
@@ -33,29 +36,39 @@ function isPositiveInt(value: number): boolean {
   return Number.isSafeInteger(value) && value > 0;
 }
 
-/** A purchasable bundle of credits. Validates itself; immutable. */
+/** Runtime checks for what TypeScript can't guarantee (config could be edited or mistyped). */
+function assertValidDefinition(def: PackDefinition): void {
+  const fail = (why: string): never => {
+    throw new ValidationError(`Pack ${def.id}: ${why}`);
+  };
+  if (!PACK_ID_PATTERN.test(def.id)) fail('bad id');
+  if (!ProductIdSchema.safeParse(def.product).success) fail('unknown product');
+  if (!PaidAiTierSchema.safeParse(def.aiTier).success) fail('bad AI tier');
+  const keys = Object.keys(def.credits);
+  if (keys.length === 0) fail('no credits');
+  if (!keys.every((k) => CreditKindSchema.safeParse(k).success)) fail('unknown credit kind');
+  if (!Object.values(def.credits).every((n) => isPositiveInt(n))) fail('bad credit count');
+  if (def.validityDays !== null && !isPositiveInt(def.validityDays)) fail('bad validity');
+  if (!isPositiveInt(def.hourlyLimit)) fail('bad hourly limit');
+}
+
+/** A purchasable bundle of credits. Validates itself; deeply immutable. */
 export class Pack {
   readonly #def: PackDefinition;
   readonly #price: Money;
   readonly #credits: readonly (readonly [CreditKind, number])[];
 
   constructor(def: PackDefinition) {
-    const credits = CREDIT_KINDS.flatMap((kind) => {
-      const count = def.credits[kind];
-      return count === undefined ? [] : [[kind, count] as const];
-    });
-    if (!/^[a-z][a-z0-9_]{1,39}$/.test(def.id)) throw new ValidationError(`Bad pack id ${def.id}`);
-    if (credits.length === 0 || !credits.every(([, n]) => isPositiveInt(n))) {
-      throw new ValidationError(`Pack ${def.id} needs positive whole credit counts`);
-    }
-    if (def.validityDays !== null && !isPositiveInt(def.validityDays)) {
-      throw new ValidationError(`Pack ${def.id} has an invalid validity`);
-    }
-    if (!isPositiveInt(def.hourlyLimit)) throw new ValidationError(`Bad hourly limit ${def.id}`);
+    assertValidDefinition(def);
     this.#price = Money.ofRupees(def.priceRupees);
-    if (this.#price.isZero()) throw new ValidationError(`Pack ${def.id} must cost something`);
-    this.#def = def;
-    this.#credits = credits;
+    if (this.#price.isZero()) throw new ValidationError(`Pack ${def.id}: must cost something`);
+    this.#credits = Object.freeze(
+      CREDIT_KINDS.flatMap((kind) => {
+        const count = def.credits[kind];
+        return count === undefined ? [] : [Object.freeze([kind, count] as const)];
+      }),
+    );
+    this.#def = Object.freeze({ ...def, credits: Object.freeze({ ...def.credits }) });
   }
 
   public get id(): string {
@@ -103,14 +116,14 @@ export class Pack {
 }
 
 /** Which credit kinds pay for each action, most specific first (PRD A6.3 feature pools). */
-const CREDIT_POOLS: Readonly<Record<Action, readonly CreditKind[]>> = {
-  roast: [],
-  rewrite: ['rewrite', 'any_rewrite'],
-  tailor: ['tailored_rewrite', 'any_rewrite'],
-  cover_letter: ['cover_letter'],
-  linkedin: ['linkedin'],
-  interview_questions: ['interview_questions'],
-};
+const CREDIT_POOLS: Readonly<Record<Action, readonly CreditKind[]>> = Object.freeze({
+  roast: Object.freeze([]),
+  rewrite: Object.freeze(['rewrite', 'any_rewrite'] as const),
+  tailor: Object.freeze(['tailored_rewrite', 'any_rewrite'] as const),
+  cover_letter: Object.freeze(['cover_letter'] as const),
+  linkedin: Object.freeze(['linkedin'] as const),
+  interview_questions: Object.freeze(['interview_questions'] as const),
+});
 
 /** The ONLY source of prices, packs and feature pools (PRD A6, B6). */
 export class Catalog {

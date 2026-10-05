@@ -11,8 +11,11 @@ export const LIMITS = {
   pdfMaxBytes: 2 * 1024 * 1024,
   pdfMaxPages: 4,
   pdfParseTimeoutMs: 10_000,
-  /** Request bodies, checked by the Worker (T10). */
-  requestBodyMaxBytes: 32 * 1024,
+  /**
+   * Request bodies, checked by the Worker (T10). 64 KB, not the PRD's 32 KB: 12k Devanagari
+   * characters plus an 8k job post is ~60 KB of UTF-8, and must fail the schema, not the body cap.
+   */
+  requestBodyMaxBytes: 64 * 1024,
   /** Free roasts per day (A5). */
   freeRoastsPerDayAnonymous: 1,
   freeRoastsPerDaySignedIn: 3,

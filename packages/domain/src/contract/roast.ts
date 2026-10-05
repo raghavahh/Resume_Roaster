@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LIMITS } from '../limits';
-import { boundedText } from './common';
+import { boundedText, singleLine } from './common';
 
 export const ROAST_LEVELS = ['mild', 'spicy', 'nuclear'] as const;
 export const RoastLevelSchema = z.enum(ROAST_LEVELS);
@@ -16,7 +16,8 @@ export const RoastModeSchema = z.enum(ROAST_MODES);
 export type RoastMode = z.infer<typeof RoastModeSchema>;
 
 export const resumeTextSchema = boundedText(LIMITS.resumeMinChars, LIMITS.resumeMaxChars);
-export const targetRoleSchema = boundedText(2, LIMITS.targetRoleMaxChars);
+/** Single line: newlines can't smuggle extra "instructions" into the prompt. */
+export const targetRoleSchema = boundedText(2, LIMITS.targetRoleMaxChars, singleLine);
 
 /** POST /v1/roaster/roast. Strict: unknown keys (e.g. `userId`) are rejected (S-03). */
 export const RoastRequestSchema = z.strictObject({

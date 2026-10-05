@@ -20,7 +20,7 @@ export class Money {
         `Money must be a non-negative whole number of paise, got ${String(paise)}`,
       );
     }
-    return new Money(paise);
+    return new Money(paise + 0); // + 0 turns -0 into 0
   }
 
   public static ofRupees(rupees: number): Money {
@@ -58,6 +58,11 @@ export class Money {
 
   public equals(other: Money): boolean {
     return this.#paise === other.#paise;
+  }
+
+  /** Serialises as integer paise, so logs and responses never show `{}`. */
+  public toJSON(): number {
+    return this.#paise;
   }
 
   /** Indian formatting: "₹99", "₹1,00,000", "₹99.50". */
