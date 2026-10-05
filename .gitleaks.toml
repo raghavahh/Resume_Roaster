@@ -1,0 +1,30 @@
+title = "Resume Roaster secret scanning"
+
+# Keep every built-in gitleaks rule (API keys, private keys, JWTs, ...).
+[extend]
+useDefault = true
+
+# Any value assigned to one of this project's secret names (PRD B9), whatever its entropy.
+# Catches `.dev.vars` lines, `export X=...`, `const X = "..."` and JSON `"X": "..."`.
+# Empty template values (`X=`) and env lookups (`c.env.X`) do not match.
+[[rules]]
+id = "project-secret-assignment"
+description = "Value assigned to a project secret name (see PRD B9)"
+regex = '''(?m)(?:^|[\s"'])(?:RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|SUPABASE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY|GROQ_API_KEY|GEMINI_API_KEY|OPENROUTER_API_KEY|TURNSTILE_SECRET_KEY|IP_HASH_SECRET|SENTRY_AUTH_TOKEN)["']?\s*[:=]\s*["']?([A-Za-z0-9_\-+/=.]{6,})["']?\s*[;,]?\s*$'''
+secretGroup = 1
+keywords = [
+  "razorpay_key_secret",
+  "razorpay_webhook_secret",
+  "supabase_secret_key",
+  "supabase_service_role_key",
+  "groq_api_key",
+  "gemini_api_key",
+  "openrouter_api_key",
+  "turnstile_secret_key",
+  "ip_hash_secret",
+  "sentry_auth_token",
+]
+
+[[rules.allowlists]]
+regexTarget = "secret"
+regexes = ['''^(?:process\.env|import\.meta\.env|c\.env|env)\.''']
