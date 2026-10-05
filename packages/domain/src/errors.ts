@@ -16,6 +16,23 @@ export const ERROR_CODES = [
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
+/** The single code → HTTP status mapping (PRD D3 rule 11), shared by the API and its test doubles. */
+export const HTTP_STATUS: Readonly<Record<ErrorCode, number>> = Object.freeze({
+  VALIDATION: 400,
+  UNAUTHENTICATED: 401,
+  NO_CREDITS: 402,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  PAYLOAD_TOO_LARGE: 413,
+  QUOTA_EXCEEDED: 429,
+  RATE_LIMITED: 429,
+  PAYMENT_INVALID: 400,
+  INTERNAL: 500,
+  UPSTREAM_FAILED: 502,
+  SOLD_OUT: 503,
+  UNAVAILABLE: 503,
+});
+
 /**
  * Base of all expected, typed failures. Abstract, so only the subclasses below can be thrown.
  * `name` is the code, not the class name: minifiers mangle class names.
