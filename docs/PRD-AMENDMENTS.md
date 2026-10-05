@@ -2,11 +2,11 @@
 
 `docs/PRD.md` is the original plan, kept unchanged. Where this file disagrees with it, **this file wins**. Each item says what changed and why.
 
-| Status       | Meaning                                                                                  |
-| ------------ | ---------------------------------------------------------------------------------------- |
-| **Decided**  | Applies now                                                                              |
-| **Proposed** | Recommended; needs the owner's confirmation before the phase that uses it                |
-| **Verify**   | An external fact to check against current docs before coding the part that depends on it |
+| Status        | Meaning                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| **Decided**   | Applies now                                                                              |
+| **Delegated** | Decided by Claude during the build, as the owner instructed                              |
+| **Verify**    | An external fact to check against current docs before coding the part that depends on it |
 
 ## Decided
 
@@ -25,7 +25,21 @@ Setup → **shared contract** (Zod schemas, error codes, `Catalog`) → **risk s
 
 typescript-eslint 8.71 supports TypeScript `>=4.8.4 <6.1.0`, so we stay on 6.0.x until it supports 7.
 
-## Proposed (confirm before the phase that needs them)
+### AM-04: Hidden owner-only analytics dashboard (owner request, 2026-10-05)
+
+Not in the original PRD. The owner gets one private page showing signups, logins/active users, roasts, conversion, sales and revenue by pack, refunds, credit usage, AI budget per provider, "sold out" days and anonymous product events.
+
+- **Invisible to everyone else.** Admin API routes return a plain `404 NOT_FOUND`, the same response as any unknown route, unless the caller is an allowlisted admin. No link, sitemap entry or robots hint points to the page; it's `noindex`, and its path is set by config, not hard-coded.
+- **Locked down.** Access requires all of: a valid JWT; a user id in the `ADMIN_USER_IDS` Worker secret; and a JWT with `aal: "aal2"`, meaning the owner's login passed Supabase's authenticator-app second factor.
+- **No personal data on the dashboard.** Aggregates and order metadata only (order id, pack, amount, status, time), never emails, names or resume content.
+- **Anonymous product events** (`POST /v1/events`: pricing viewed, paywall viewed, checkout started, card downloaded/shared, PDF downloaded) are stored as per-day counters with no identifiers. That's enough for funnels without tracking anyone.
+- Attack tests: S-ADM-01 non-admin JWT gets 404; S-ADM-02 admin without aal2 gets 404; S-ADM-03 no token gets 404; S-ADM-04 the response contains no emails/PII.
+
+### AM-05: History keeps metadata only (resolves AM-13)
+
+The server stores **no generated content**. `generations` becomes `usage_events` (user, action, time). The rewrite itself lives in the browser (local storage, with a "clear" button). This keeps the C1 promise "no resume text is stored" true without exceptions.
+
+## Decided during the build (the owner delegated these decisions)
 
 | Id    | Change                                                                                                                                                                       | Why                                                                                                                                                                                                                     | Phase        |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |

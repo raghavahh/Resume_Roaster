@@ -13,7 +13,7 @@ export default defineConfig({
         functions: 80,
         branches: 80,
         statements: 80,
-        'packages/domain/src/money.ts': {
+        'packages/domain/src/{money,catalog,entitlements}.ts': {
           lines: 100,
           functions: 100,
           branches: 100,

@@ -4,10 +4,13 @@ import {
   AuthError,
   ForbiddenError,
   NoCreditsError,
+  NotFoundError,
+  PayloadTooLargeError,
   PaymentError,
   QuotaExceededError,
   RateLimitError,
   SoldOutError,
+  UnavailableError,
   UpstreamError,
   ValidationError,
 } from '../src';
@@ -23,6 +26,9 @@ describe('AppError hierarchy', () => {
     [new PaymentError('m'), 'PAYMENT_INVALID', 'PaymentError'],
     [new UpstreamError('m'), 'UPSTREAM_FAILED', 'UpstreamError'],
     [new RateLimitError('m'), 'RATE_LIMITED', 'RateLimitError'],
+    [new NotFoundError('m'), 'NOT_FOUND', 'NotFoundError'],
+    [new PayloadTooLargeError('m'), 'PAYLOAD_TOO_LARGE', 'PayloadTooLargeError'],
+    [new UnavailableError('m'), 'UNAVAILABLE', 'UnavailableError'],
   ])('%o carries code %s', (error, code, name) => {
     expect(error).toBeInstanceOf(AppError);
     expect(error).toBeInstanceOf(Error);

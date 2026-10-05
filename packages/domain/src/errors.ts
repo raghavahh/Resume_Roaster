@@ -1,15 +1,20 @@
 /** Every error code the API can return (PRD B5). Mapped to HTTP status in exactly one place. */
-export type ErrorCode =
-  | 'VALIDATION'
-  | 'UNAUTHENTICATED'
-  | 'FORBIDDEN'
-  | 'QUOTA_EXCEEDED'
-  | 'SOLD_OUT'
-  | 'NO_CREDITS'
-  | 'PAYMENT_INVALID'
-  | 'UPSTREAM_FAILED'
-  | 'RATE_LIMITED'
-  | 'INTERNAL';
+export const ERROR_CODES = [
+  'VALIDATION',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'QUOTA_EXCEEDED',
+  'SOLD_OUT',
+  'NO_CREDITS',
+  'PAYMENT_INVALID',
+  'UPSTREAM_FAILED',
+  'RATE_LIMITED',
+  'PAYLOAD_TOO_LARGE',
+  'UNAVAILABLE',
+  'INTERNAL',
+] as const;
+export type ErrorCode = (typeof ERROR_CODES)[number];
 
 /** Base of all expected, typed failures. Abstract, so only the subclasses below can be thrown. */
 export abstract class AppError extends Error {
@@ -55,4 +60,17 @@ export class UpstreamError extends AppError {
 
 export class RateLimitError extends AppError {
   public override readonly code = 'RATE_LIMITED';
+}
+
+export class NotFoundError extends AppError {
+  public override readonly code = 'NOT_FOUND';
+}
+
+export class PayloadTooLargeError extends AppError {
+  public override readonly code = 'PAYLOAD_TOO_LARGE';
+}
+
+/** A kill switch is on (PRD C3 incident response) or a dependency is down. */
+export class UnavailableError extends AppError {
+  public override readonly code = 'UNAVAILABLE';
 }
